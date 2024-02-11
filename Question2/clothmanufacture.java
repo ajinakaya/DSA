@@ -21,21 +21,21 @@ public class clothmanufacture {
         int targetDresses = totalDresses / n;
 
         int moves = 0;
+        int currentSum = 0;
 
-        // Iterate through the sewing machines and calculate the moves required to equalize dresses
-        for (int i = 0; i < n; i++) {
-            // Calculate the difference between the current dresses and the target dresses
-            int diff = dresses[i] - targetDresses;
-
-            // Accumulate the absolute difference as moves
-            moves += Math.abs(diff);
+        // Iterate through each sewing machine and calculate the moves required
+        for (int dress : dresses) {
+            currentSum += dress - targetDresses;
+            moves += Math.abs(currentSum);
         }
+ 
 
-        return moves / 2; 
+        return moves/2;
     }
 
+
     public static void main(String[] args) {
-        int[] dresses = {2, 1, 3, 0, 2};
+        int[] dresses = {1, 0, 5};
         int result = minMovesToEqualize(dresses);
 
         if (result != -1) {

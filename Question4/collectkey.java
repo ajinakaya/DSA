@@ -16,7 +16,7 @@ class State {
 
 public class collectkey {
 
-     // Method to find the minimum steps to collect all keys and reach the exit
+    // Method to find the minimum steps to collect all keys and reach the exit
     public int minSteps(char[][] grid) {
         int m = grid.length;
         int n = grid[0].length;
@@ -41,53 +41,49 @@ public class collectkey {
         queue.offer(new State(startX, startY, 0));
         visited[startX][startY][0] = true;
 
-        int[] dirs = {-1, 0, 1, 0, -1};// Possible directions: Up, Right, Down, Left
+        int[] directions = {0, 1, 0, -1, 0}; // Possible directions: Up, Right, Down, Left
 
         int steps = 0;
 
-         // BFS to explore the maze and collect keys
+        // BFS to explore the maze and collect keys
         while (!queue.isEmpty()) {
             int size = queue.size();
 
             for (int i = 0; i < size; i++) {
                 State current = queue.poll();
 
-                 // Check if the player reaches the exit with all keys collected
-                if (grid[current.x][current.y] == 'E' && current.keys == allKeys) {
+                if (current.keys == allKeys) {
                     return steps;
                 }
 
-                for (int k = 0; k < 4; k++) {
-                    int nx = current.x + dirs[k];
-                    int ny = current.y + dirs[k + 1];
+                for (int d = 0; d < 4; d++) {
+                    int newX = current.x + directions[d];
+                    int newY = current.y + directions[d + 1];
 
-                     // Check if the new position is within the maze boundaries and not blocked by walls
-                    if (nx >= 0 && nx < m && ny >= 0 && ny < n && grid[nx][ny] != 'W') {
-                        char cell = grid[nx][ny];
+                    if (newX >= 0 && newX < m && newY >= 0 && newY < n && grid[newX][newY] != 'W') {
+                        char cell = grid[newX][newY];
 
-                           // If the cell contains a key
-                        if ('a' <= cell && cell <= 'f') {
+                        if (cell == 'P') {
+                            int newKeys = current.keys;
+
+                            if (!visited[newX][newY][newKeys]) {
+                                queue.offer(new State(newX, newY, newKeys));
+                                visited[newX][newY][newKeys] = true;
+                            }
+                        } else if ('a' <= cell && cell <= 'f') {
                             int newKeys = current.keys | (1 << (cell - 'a'));
 
-                            // If the new set of keys has not been visited, mark it as visited and enqueue the state
-                            if (!visited[nx][ny][newKeys]) {
-                                visited[nx][ny][newKeys] = true;
-                                queue.offer(new State(nx, ny, newKeys));
+                            if (!visited[newX][newY][newKeys]) {
+                                queue.offer(new State(newX, newY, newKeys));
+                                visited[newX][newY][newKeys] = true;
                             }
-                        }
-                        
-                          // If the cell contains a locked door
-                        else if ('A' <= cell && cell <= 'F') {
-                            // Check if the player has the corresponding key to open the door
-                            if ((current.keys & (1 << (cell - 'A'))) > 0 && !visited[nx][ny][current.keys]) {
-                                visited[nx][ny][current.keys] = true;
-                                queue.offer(new State(nx, ny, current.keys));
+                        } else if ('A' <= cell && cell <= 'F' && ((current.keys >> (cell - 'A')) & 1) == 1) {
+                            int newKeys = current.keys;
+
+                            if (!visited[newX][newY][newKeys]) {
+                                queue.offer(new State(newX, newY, newKeys));
+                                visited[newX][newY][newKeys] = true;
                             }
-                        }
-                        // If the cell is a passage or a cell to collect a key or the exit
-                        else if (cell == 'P' && !visited[nx][ny][current.keys]) {
-                            visited[nx][ny][current.keys] = true;
-                            queue.offer(new State(nx, ny, current.keys));
                         }
                     }
                 }
@@ -96,20 +92,19 @@ public class collectkey {
             steps++;
         }
 
-        return -1; // Unable to collect all keys and reach the exit
+        return -1; // If no path to collect all keys is found
     }
 
     public static void main(String[] args) {
-        collectkey mazeSolver = new collectkey();
-
         char[][] grid = {
-                {'S', 'P', 'P', 'P'},
-                {'W', 'P', 'P', 'E'},
-                {'P', 'b', 'W', 'P'},
-                {'P', 'P', 'P', 'P'}
+                {'S', 'P', 'q', 'P', 'P'},
+                {'W', 'W', 'W', 'P', 'W'},
+                {'r', 'P', 'Q', 'P', 'R'}
         };
 
-        int result = mazeSolver.minSteps(grid);
-        System.out.println("Minimum number of steps to collect all keys and reach the exit: " + result);
+        collectkey collectKey = new collectkey();
+        int result = collectKey.minSteps(grid);
+
+        System.out.println("Minimum number of moves to collect all keys: " + result);
     }
 }
