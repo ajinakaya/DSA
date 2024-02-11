@@ -1,9 +1,7 @@
 package Question4;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
-// Class to represent the state of the player
 class State {
     int x, y, keys;
 
@@ -15,84 +13,88 @@ class State {
 }
 
 public class collectkey {
-
-    // Method to find the minimum steps to collect all keys and reach the exit
-    public int minSteps(char[][] grid) {
+    // Method to find the minimum number of moves to collect all keys
+    public static int minMovesToCollectKeys(char[][] grid) {
         int m = grid.length;
         int n = grid[0].length;
-        int allKeys = 0;
+        int totalKeys = 0;
         int startX = 0, startY = 0;
 
-        // Find the initial position of the player (S) and collect all keys
+        // Count the total number of keys and find the starting position
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 if (grid[i][j] == 'S') {
                     startX = i;
                     startY = j;
-                } else if ('a' <= grid[i][j] && grid[i][j] <= 'f') {
-                    allKeys |= (1 << (grid[i][j] - 'a'));
+                } else if (Character.isLowerCase(grid[i][j])) {
+                    totalKeys++;
                 }
             }
         }
 
+         // Initialize BFS queue, visited set, and starting state
         Queue<State> queue = new LinkedList<>();
-        boolean[][][] visited = new boolean[m][n][64];
+        Set<String> visited = new HashSet<>();
+        State startState = new State(startX, startY, 0);
+        queue.offer(startState);
+        visited.add(startState.x + "-" + startState.y + "-" + startState.keys);
 
-        queue.offer(new State(startX, startY, 0));
-        visited[startX][startY][0] = true;
+        int[][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        int moves = 0;
 
-        int[] directions = {0, 1, 0, -1, 0}; // Possible directions: Up, Right, Down, Left
-
-        int steps = 0;
-
-        // BFS to explore the maze and collect keys
         while (!queue.isEmpty()) {
             int size = queue.size();
 
             for (int i = 0; i < size; i++) {
-                State current = queue.poll();
+                State currentState = queue.poll();
 
-                if (current.keys == allKeys) {
-                    return steps;
+                 // Check if all keys are collected
+                if (currentState.keys == (1 << totalKeys) - 1) {
+                   // All keys collected, return the minimum moves
+                    return moves;
                 }
 
-                for (int d = 0; d < 4; d++) {
-                    int newX = current.x + directions[d];
-                    int newY = current.y + directions[d + 1];
+                for (int[] dir : directions) {
+                    int newX = currentState.x + dir[0];
+                    int newY = currentState.y + dir[1];
 
+                      // Check if the new position is within bounds and not a wall
                     if (newX >= 0 && newX < m && newY >= 0 && newY < n && grid[newX][newY] != 'W') {
                         char cell = grid[newX][newY];
 
-                        if (cell == 'P') {
-                            int newKeys = current.keys;
+                        if (Character.isLowerCase(cell) && (currentState.keys & (1 << (cell - 'a'))) == 0) {
+                            // Collect key
+                            int newKeys = currentState.keys | (1 << (cell - 'a'));
+                            State newState = new State(newX, newY, newKeys);
 
-                            if (!visited[newX][newY][newKeys]) {
-                                queue.offer(new State(newX, newY, newKeys));
-                                visited[newX][newY][newKeys] = true;
+                            if (visited.add(newState.x + "-" + newState.y + "-" + newState.keys)) {
+                                queue.offer(newState);
                             }
-                        } else if ('a' <= cell && cell <= 'f') {
-                            int newKeys = current.keys | (1 << (cell - 'a'));
+                        } else if (Character.isUpperCase(cell) && (currentState.keys & (1 << (cell - 'A'))) != 0) {
+                            // Use key to unlock door
+                            State newState = new State(newX, newY, currentState.keys);
 
-                            if (!visited[newX][newY][newKeys]) {
-                                queue.offer(new State(newX, newY, newKeys));
-                                visited[newX][newY][newKeys] = true;
+                            if (visited.add(newState.x + "-" + newState.y + "-" + newState.keys)) {
+                                queue.offer(newState);
                             }
-                        } else if ('A' <= cell && cell <= 'F' && ((current.keys >> (cell - 'A')) & 1) == 1) {
-                            int newKeys = current.keys;
 
-                            if (!visited[newX][newY][newKeys]) {
-                                queue.offer(new State(newX, newY, newKeys));
-                                visited[newX][newY][newKeys] = true;
+                                // Move to an open path or the starting point
+                        } else if (cell == 'P' || cell == 'S') {
+                            State newState = new State(newX, newY, currentState.keys);
+
+                            if (visited.add(newState.x + "-" + newState.y + "-" + newState.keys)) {
+                                queue.offer(newState);
                             }
                         }
                     }
                 }
             }
 
-            steps++;
+            moves++;
         }
 
-        return -1; // If no path to collect all keys is found
+        // Unable to collect all keys
+        return -1;
     }
 
     public static void main(String[] args) {
@@ -102,9 +104,7 @@ public class collectkey {
                 {'r', 'P', 'Q', 'P', 'R'}
         };
 
-        collectkey collectKey = new collectkey();
-        int result = collectKey.minSteps(grid);
-
-        System.out.println("Minimum number of moves to collect all keys: " + result);
+        int result = minMovesToCollectKeys(grid);
+        System.out.println(result);
     }
 }

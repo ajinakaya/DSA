@@ -102,6 +102,7 @@ public class GeneticAlgorithm {
     public static Tour evolvePopulation(Population population, double mutationRate) {
         Population newPopulation = new Population(population.getTours().size(), population.getTours().get(0).getTour());
 
+          // Generate new population by selecting parents, crossover, and mutation
         for (int i = 0; i < population.getTours().size(); i++) {
             Tour parent1 = selectParent(population);
             Tour parent2 = selectParent(population);
@@ -110,26 +111,28 @@ public class GeneticAlgorithm {
             newPopulation.getTours().set(i, child);
         }
 
-        newPopulation.sortPopulation();
-        return newPopulation.getTours().get(0);
+        newPopulation.sortPopulation(); // Sort the new population based on fitness
+        return newPopulation.getTours().get(0);// Return the best tour from the new population
     }
 
+     // Select a parent based on fitness using a probability distribution
     private static Tour selectParent(Population population) {
         Random random = new Random();
         double randomValue = random.nextDouble();
         double cumulativeProbability = 0.0;
 
+        // Select a parent based on a cumulative probability distribution
         for (Tour tour : population.getTours()) {
             cumulativeProbability += tour.getFitness() / population.getTours().get(0).getFitness();
             if (randomValue <= cumulativeProbability) {
                 return tour;
             }
         }
-
-        // Should not reach here
+    // Should not reach here, return the first tour if needed
         return population.getTours().get(0);
     }
 
+     // Perform crossover operation on two parent tours
     private static Tour crossover(Tour parent1, Tour parent2) {
         Random random = new Random();
         int size = parent1.getTour().size();
@@ -144,12 +147,14 @@ public class GeneticAlgorithm {
 
         List<City> childOrder = new ArrayList<>(Collections.nCopies(size, null));
 
+            // Copying  a segment from parent1 to the child
         for (int i = start; i <= end; i++) {
             childOrder.set(i, parent1.getTour().get(i));
         }
 
         int currentIndex = (end + 1) % size;
 
+         // Copying the remaining cities from parent2 to the child
         for (City city : parent2.getTour()) {
             if (!childOrder.contains(city)) {
                 childOrder.set(currentIndex, city);
@@ -163,6 +168,7 @@ public class GeneticAlgorithm {
     private static void mutate(Tour tour, double mutationRate) {
         Random random = new Random();
         if (random.nextDouble() < mutationRate) {
+             // Swap the positions of two cities in the tour
             int index1 = random.nextInt(tour.getTour().size());
             int index2 = random.nextInt(tour.getTour().size());
             tour.swapCities(index1, index2);
@@ -170,7 +176,7 @@ public class GeneticAlgorithm {
     }
 
     public static void main(String[] args) {
-        // Example cities (replace with your own data)
+       
         List<City> cities = new ArrayList<>();
         cities.add(new City(0, 0));
         cities.add(new City(1, 2));
