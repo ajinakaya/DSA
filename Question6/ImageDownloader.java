@@ -110,7 +110,7 @@ public class ImageDownloader extends JFrame {
         currentTask = new ImageDownloadTask(url, statusTextArea, taskPanels);
         executorService.submit(currentTask);
 
-        // Creating  a panel to display the progress of this download task
+        // Creating  a panel to display the progress of  download task
         DownloadTaskPanel taskPanel = new DownloadTaskPanel(url);
         taskPanels.add(taskPanel);
         add(taskPanel, BorderLayout.SOUTH);
