@@ -1,13 +1,17 @@
 package Question6;
 
 import java.awt.*;
-import javax.swing.*;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.swing.*;
 
 //  representing the Image Downloader application
 public class ImageDownloader extends JFrame {
@@ -22,8 +26,6 @@ public class ImageDownloader extends JFrame {
     private ExecutorService executorService;
     private ImageDownloadTask currentTask;
 
-
-    
     // Constructor for the ImageDownloader
     public ImageDownloader() {
         setTitle("Image Downloader");
@@ -32,11 +34,11 @@ public class ImageDownloader extends JFrame {
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
-        executorService = Executors.newFixedThreadPool(5);// Creating a fixed thread pool
+        executorService = Executors.newFixedThreadPool(5); // Creating a fixed thread pool
         taskPanels = new CopyOnWriteArrayList<>();
     }
 
-        // Initialize GUI components
+    // Initialize GUI components
     private void initComponents() {
         urlTextField = new JTextField(30);
         downloadButton = new JButton("Download");
@@ -46,17 +48,17 @@ public class ImageDownloader extends JFrame {
         statusTextArea = new JTextArea(15, 30);
         statusTextArea.setEditable(false);
 
-         // ActionListener for the Download button
-    downloadButton.addActionListener(e -> {
-        String url = urlTextField.getText().trim();
-        if (!url.isEmpty() && (currentTask == null || (currentTask.isDone()))) {
-            downloadImage(url);
-        } else{
-            JOptionPane.showMessageDialog(this, "A download is already in progress.");
-        }
-    });
+        // ActionListener for the Download button
+        downloadButton.addActionListener(e -> {
+            String url = urlTextField.getText().trim();
+            if (!url.isEmpty() && (currentTask == null || (currentTask.isDone()))) {
+                downloadImage(url);
+            } else {
+                JOptionPane.showMessageDialog(this, "A download is already in progress.");
+            }
+        });
 
-      // ActionListener for the Pause button
+        // ActionListener for the Pause button
         pauseButton.addActionListener(e -> {
             if (currentTask != null) {
                 currentTask.pause();
@@ -64,7 +66,7 @@ public class ImageDownloader extends JFrame {
             }
         });
 
-          // ActionListener for the Resume button
+        // ActionListener for the Resume button
         resumeButton.addActionListener(e -> {
             if (currentTask != null) {
                 currentTask.resume();
@@ -72,20 +74,18 @@ public class ImageDownloader extends JFrame {
             }
         });
 
-         // ActionListener for the Cancel button
+        // ActionListener for the Cancel button
         cancelButton.addActionListener(e -> {
             if (currentTask != null) {
                 currentTask.cancel();
                 statusTextArea.append("Download canceled.\n");
-                currentTask = null;  
+                currentTask = null;
                 removeTaskPanel();
-
             }
         });
 
         setLayout(new BorderLayout());
 
-        
         // Create and add components to the top panel
         JPanel topPanel = new JPanel(new FlowLayout());
         topPanel.add(new JLabel("Enter URL:"));
@@ -110,7 +110,7 @@ public class ImageDownloader extends JFrame {
         currentTask = new ImageDownloadTask(url, statusTextArea, taskPanels);
         executorService.submit(currentTask);
 
-        // Creating  a panel to display the progress of  download task
+        // Creating a panel to display the progress of the download task
         DownloadTaskPanel taskPanel = new DownloadTaskPanel(url);
         taskPanels.add(taskPanel);
         add(taskPanel, BorderLayout.SOUTH);
@@ -118,6 +118,7 @@ public class ImageDownloader extends JFrame {
         revalidate();
         repaint();
     }
+
     private void removeTaskPanel() {
         if (!taskPanels.isEmpty()) {
             DownloadTaskPanel removedPanel = taskPanels.remove(taskPanels.size() - 1);
@@ -127,14 +128,13 @@ public class ImageDownloader extends JFrame {
         }
     }
 
-
-    //  method to start the application
+    // method to start the application
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new ImageDownloader());
     }
 }
 
-//  representing the Image Download Task
+// representing the Image Download Task
 class ImageDownloadTask implements Runnable {
 
     private final String imageUrl;
@@ -144,9 +144,7 @@ class ImageDownloadTask implements Runnable {
 
     private volatile boolean canceled;
     private volatile boolean paused;
-    private volatile boolean completed; 
-
-   
+    private volatile boolean completed;
 
     public ImageDownloadTask(String imageUrl, JTextArea statusTextArea, List<DownloadTaskPanel> taskPanels) {
         this.imageUrl = imageUrl;
@@ -154,7 +152,6 @@ class ImageDownloadTask implements Runnable {
         this.taskPanels = taskPanels;
     }
 
-    
     // Run method that simulates downloading an image in chunks
     @Override
     public void run() {
@@ -179,9 +176,12 @@ class ImageDownloadTask implements Runnable {
                         return; // Exit the download task if canceled
                     }
                 }
-                SwingUtilities.invokeLater(() -> appendStatus("Downloaded: " + imageUrl));
+                SwingUtilities.invokeLater(() -> {
+                    appendStatus("Downloaded: " + imageUrl);
+                    saveImage(url);
+                });
                 completed = true;
-            } 
+            }
         } catch (MalformedURLException e) {
             SwingUtilities.invokeLater(() -> appendStatus("Invalid URL: " + imageUrl));
         } catch (InterruptedException e) {
@@ -206,8 +206,8 @@ class ImageDownloadTask implements Runnable {
             lock.unlock();
         }
     }
-    
-     // Method to update progress bar in all task panels
+
+    // Method to update progress bar in all task panels
     private void updateProgressBar(int progress) {
         SwingUtilities.invokeLater(() -> {
             for (DownloadTaskPanel taskPanel : taskPanels) {
@@ -216,7 +216,7 @@ class ImageDownloadTask implements Runnable {
         });
     }
 
-        // Method to append status messages to the text area
+    // Method to append status messages to the text area
     private void appendStatus(String message) {
         lock.lock();
         try {
@@ -225,35 +225,51 @@ class ImageDownloadTask implements Runnable {
             lock.unlock();
         }
     }
+
     // Method to check if the download is completed
     public boolean isDone() {
-        return completed ;
+        return completed;
     }
-   
-      // Method to cancel the download
+
+    // Method to cancel the download
     public void cancel() {
         canceled = true;
-       
     }
-    
+
     // Method to pause the download
     public void pause() {
         paused = true;
     }
 
-     // Method to resume the download
+    // Method to resume the download
     public void resume() {
         paused = false;
     }
+
+    // Method to save the downloaded image to a folder
+    private void saveImage(URL imageUrl) {
+        try {
+            String fileName = imageUrl.getFile();
+            String extension = fileName.substring(fileName.lastIndexOf('.') + 1);
+            String savedFileName = "downloaded_image." + extension;
+
+            Path destination = Path.of("images", savedFileName);
+            Files.copy(imageUrl.openStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+
+            SwingUtilities.invokeLater(() -> appendStatus("Image saved: " + savedFileName));
+        } catch (IOException e) {
+            SwingUtilities.invokeLater(() -> appendStatus("Error saving image."));
+        }
+    }
 }
 
-//  representing a panel to display the progress of a download task
+// representing a panel to display the progress of a download task
 class DownloadTaskPanel extends JPanel {
 
     private final JProgressBar progressBar;
     private final JLabel statusLabel;
 
-     // Constructor for DownloadTaskPanel
+    // Constructor for DownloadTaskPanel
     public DownloadTaskPanel(String url) {
         setLayout(new FlowLayout());
         setBorder(BorderFactory.createTitledBorder(url));
@@ -267,7 +283,7 @@ class DownloadTaskPanel extends JPanel {
         add(statusLabel);
     }
 
-     // Method to set the progress of the progress bar
+    // Method to set the progress of the progress bar
     public void setProgress(int progress) {
         progressBar.setValue(progress);
         progressBar.setString(progress + "%");

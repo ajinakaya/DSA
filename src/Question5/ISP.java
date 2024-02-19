@@ -1,71 +1,59 @@
 package Question5;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+
+
+import java.util.*;
 
 public class ISP {
 
-       // Method to find the impacted devices given the network edges and target device
-    public static List<Integer> findImpactedDevices(int[][] edges, int targetDevice) {
-        int numDevices = getMaxDeviceNumber(edges);
-        List<Integer> impactedDevices = bfs(edges, numDevices, targetDevice);
-        return impactedDevices;
+    public static List<Integer> findNodesWithOnlyTargetAsParent(int[][] edges, int target) {
+        Map<Integer, List<Integer>> graph = new HashMap<>();
+        Map<Integer, Integer> inDegree = new HashMap<>();
+
+        // Build the graph and calculate in-degree of each node
+        for (int[] edge : edges) {
+            int from = edge[0];
+            int to = edge[1];
+            graph.putIfAbsent(from, new ArrayList<>());
+            graph.get(from).add(to);
+            inDegree.put(to, inDegree.getOrDefault(to, 0) + 1);
+        }
+
+        // Perform DFS starting from the target node
+        List<Integer> result = new ArrayList<>();
+        dfs(graph, inDegree, target, target, result);
+
+        return result;
     }
 
-     // BFS to find impacted devices
-    private static List<Integer> bfs(int[][] edges, int numDevices, int targetDevice) {
-        List<Integer> impactedDevices = new ArrayList<>();
-        boolean[] visited = new boolean[numDevices + 1];// +1 to account for 0-based indexing
-        Queue<Integer> queue = new LinkedList<>();
+    private static void dfs(Map<Integer, List<Integer>> graph, Map<Integer, Integer> inDegree, int node, int target,
+            List<Integer> result) {
+        // If the current node has no incoming edges other than from the target node,
+        // add it to the result
+        if (inDegree.getOrDefault(node, 0) == 1 && node != target) {
+            result.add(node);
+        }
 
-        visited[targetDevice] = true;
-        queue.offer(targetDevice);
-
-        while (!queue.isEmpty()) {
-            int currentDevice = queue.poll();
-            impactedDevices.add(currentDevice);
-
-            // Get neighbors of the current device and enqueue them if not visited
-            for (int neighbor : getNeighbors(edges, currentDevice)) {
-                if (!visited[neighbor]) {
-                    visited[neighbor] = true;
-                    queue.offer(neighbor);
-                }
+        // Recursively explore the children of the current node
+        if (graph.containsKey(node)) {
+            for (int child : graph.get(node)) {
+                dfs(graph, inDegree, child, target, result);
             }
         }
-
-        return impactedDevices;
-    }
-
-    private static List<Integer> getNeighbors(int[][] edges, int currentDevice) {
-        List<Integer> neighbors = new ArrayList<>();
-        for (int[] edge : edges) {
-              // Check both ends of the edge to find neighbors
-            if (edge[0] == currentDevice) {
-                neighbors.add(edge[1]);
-            } else if (edge[1] == currentDevice) {
-                neighbors.add(edge[0]);
-            }
-        }
-        return neighbors;
-    }
-
-    private static int getMaxDeviceNumber(int[][] edges) {
-        int maxDeviceNumber = 0;
-        for (int[] edge : edges) {
-            maxDeviceNumber = Math.max(maxDeviceNumber, Math.max(edge[0], edge[1]));
-        }
-        return maxDeviceNumber;
     }
 
     public static void main(String[] args) {
-        int[][] edges = {{0, 1}, {0, 2}, {1, 3}, {1, 6}, {2, 4}, {4, 6}, {4, 5}, {5, 7}};
-        int targetDevice = 4;
+        int[][] edges = { { 0, 1 }, { 0, 2 }, { 1, 3 }, { 1, 6 }, { 2, 4 }, { 4, 6 }, { 4, 5 }, { 5, 7 } };
+        int target = 4;
 
-        List<Integer> impactedDevices = findImpactedDevices(edges, targetDevice);
+        List<Integer> uniqueParents = findNodesWithOnlyTargetAsParent(edges, target);
 
-        System.out.println("Impacted Device List: " + impactedDevices);
+        System.out.print("Nodes whose only parent is " + target + ": {");
+        for (int i = 0; i < uniqueParents.size(); i++) {
+            System.out.print(uniqueParents.get(i));
+            if (i < uniqueParents.size() - 1) {
+                System.out.print(", ");
+            }
+        }
+        System.out.println("}");
     }
 }
-                   

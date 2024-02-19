@@ -1,19 +1,110 @@
 package Question7;
 
-import java.sql.*;
-import java.sql.DriverManager;
+import javax.swing.*;
 
-public class dbconnection{
-    public static Connection dbConnect() {
+import java.sql.*;
+
+
+
+public class dbconnection {
+
+    public Connection connection;
+
+    Statement statement;
+
+    ResultSet resultSet;
+
+    int value;
+
+
+
+    public dbconnection(){
+
         try {
+
+            String username = "root";
+
+            String password = "ajina kaya8860";
+
             Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn=DriverManager.getConnection("jdbc:mysql://localhost:3306/SweetBytes","root","ajina kaya8860");
-            System.out.println("Database connected");
-            return conn ;
+
+            connection = DriverManager.getConnection(
+
+                    "jdbc:mysql://localhost:3306/DSA",username,password);
+
+
+
+            if(connection!=null){
+
+                System.out.println("Connected to database");
+
+            }else{
+
+                System.out.println("Error connecting to database");
+
+            }
+
+            statement = connection.createStatement();
+
+        }catch (Exception e){
+
+            e.printStackTrace();
+
         }
-        catch(Exception e){
-            System.out.println(e.getMessage());
-        }
-        return null;
+
     }
+
+    public int manipulate(String query){
+
+        try {
+
+            value = statement.executeUpdate(query);
+
+            connection.close();
+
+        }catch (SQLIntegrityConstraintViolationException ex){
+
+            JOptionPane.showMessageDialog(null, "These details already exist!");
+
+        }catch (SQLException e){
+
+            e.printStackTrace();
+
+        }
+
+        return value;
+
+    }
+
+
+
+    public ResultSet retrieve(String query){
+
+        try {
+
+            resultSet = statement.executeQuery(query);
+
+        }catch (SQLException e){
+
+            e.printStackTrace();
+
+        }
+
+        return resultSet;
+
+    }
+
+
+
+    public static void main(String[] args) {
+
+        new dbconnection();
+
+    }
+
+    public int insertPostIntoDatabase(String username, String postContent) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'insertPostIntoDatabase'");
+    }
+
 }
