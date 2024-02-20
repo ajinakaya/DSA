@@ -14,7 +14,7 @@ public class Register extends JFrame {
     private JTextField tfUsername;
     private JPasswordField pfPassword;
     private SocialGraph socialGraph;
-    private dbconnection database; 
+    private static dbconnection database; 
 
     public Register(SocialGraph socialGraph, dbconnection database) {
         this.socialGraph = socialGraph;
@@ -121,15 +121,14 @@ public class Register extends JFrame {
     }
     private void openHomePage(String username) {
         
-        Homepage homepage = new Homepage(username, socialGraph);
+        Homepage homepage = new Homepage(username, socialGraph,database);
         homepage.initialize(username, socialGraph); 
-        this.dispose(); // Close the current registration window
+        this.dispose(); 
     }
 
     public static void main(String[] args) {
-    
-        SocialGraph socialGraph = new SocialGraph();
-        dbconnection database = new dbconnection();
+        dbconnection database = new dbconnection();  
+        SocialGraph socialGraph = new SocialGraph(database);
         Register register = new Register(socialGraph, database);
         register.Initialize();
     }

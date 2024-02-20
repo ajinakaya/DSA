@@ -28,7 +28,7 @@ public class ISP {
     private static void dfs(Map<Integer, List<Integer>> graph, Map<Integer, Integer> inDegree, int node, int target,
             List<Integer> result) {
         // If the current node has no incoming edges other than from the target node,
-        // add it to the result
+       
         if (inDegree.getOrDefault(node, 0) == 1 && node != target) {
             result.add(node);
         }

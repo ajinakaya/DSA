@@ -1,3 +1,4 @@
+
 package Question7;
 
 import javax.swing.*;
@@ -5,8 +6,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class PostPage extends JFrame {
 
@@ -14,14 +18,14 @@ public class PostPage extends JFrame {
     private String selectedImagePath;
     private dbconnection database;
     private String username;
-    private SocialGraph socialGraph;
 
-    public PostPage(SocialGraph socialGraph, dbconnection database) {
-        this.socialGraph = socialGraph;
+     // Constructor to initialize the PostPage object
+    public PostPage(String username, dbconnection database) {
+        this.username = username;
         this.database = database;
     }
 
-
+    // Method to initialize the GUI components
     public void initialize() {
         setTitle("Post Page");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -36,10 +40,13 @@ public class PostPage extends JFrame {
         btnSelectImage.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                 // Open a file chooser dialog to select an image file
                 JFileChooser fileChooser = new JFileChooser();
                 fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                 int result = fileChooser.showOpenDialog(PostPage.this);
                 if (result == JFileChooser.APPROVE_OPTION) {
+
+                     // Get the selected image file and its path
                     File selectedFile = fileChooser.getSelectedFile();
                     selectedImagePath = selectedFile.getAbsolutePath();
 
@@ -60,8 +67,8 @@ public class PostPage extends JFrame {
             // Save the post and image to the database
             savePostToDatabase(username, selectedImagePath);
 
-            // You can add logic to save the post, update the social graph, etc.
-            dispose(); // Close the post page after submission
+            
+            dispose(); 
         });
 
         mainPanel.add(btnSubmitPost, BorderLayout.SOUTH);
@@ -69,15 +76,17 @@ public class PostPage extends JFrame {
         add(mainPanel);
     }
 
+    // Method to display the selected image on the GUI
     private void displaySelectedImage(String imagePath) {
         ImageIcon imageIcon = new ImageIcon(imagePath);
         Image image = imageIcon.getImage();
         Image scaledImage = image.getScaledInstance(300, 300, Image.SCALE_SMOOTH);
         imageIcon = new ImageIcon(scaledImage);
         lblSelectedImage.setIcon(imageIcon);
-        lblSelectedImage.setText(""); // Clear any previous text
+        lblSelectedImage.setText("");
     }
 
+      // Method to save the post and image to the database
     private void savePostToDatabase(String username, String imagePath) {
         if (database != null) {
             int result = insertImageIntoDatabase(username, imagePath);
@@ -89,36 +98,33 @@ public class PostPage extends JFrame {
         }
     }
 
+    // Method to insert image data into the database
     private int insertImageIntoDatabase(String username, String imagePath) {
-        
-        String query = "INSERT INTO posts (username, image_path) VALUES (?, ?)";
-        try (PreparedStatement preparedStatement = database.connection.prepareStatement(query)) {
-            preparedStatement.setString(1, username);
-            preparedStatement.setString(2, imagePath);
-            return preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return -1;
-        }
-    }
+    String query = "INSERT INTO posts (username, image_path, photo) VALUES (?, ?, ?)";
+    try (PreparedStatement preparedStatement = database.connection.prepareStatement(query)) {
+        preparedStatement.setString(1, username);
+        preparedStatement.setString(2, imagePath);
 
-    private void openHomePage(String username) {
         
-        Homepage homepage = new Homepage(username, socialGraph);
-        homepage.initialize(username, socialGraph); 
-        this.dispose(); // Close the current registration window
+        byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
+        preparedStatement.setBytes(3, imageBytes);
+
+        
+            // Execute the update and return the result
+        return preparedStatement.executeUpdate();
+    } catch (SQLException | IOException e) {
+        e.printStackTrace();
+        return -1;
     }
+}
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                // For testing purposes, create instances of dbconnection
+               
                 dbconnection database = new dbconnection();
-                SocialGraph socialGraph = new SocialGraph();
-
-                // Replace "username" with the actual username from the registration process
-                PostPage postPage = new PostPage( socialGraph,database);
+                PostPage postPage = new PostPage("User123", database);
                 postPage.initialize();
                 postPage.setVisible(true);
             }

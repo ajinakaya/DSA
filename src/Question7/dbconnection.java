@@ -102,9 +102,6 @@ public class dbconnection {
 
     }
 
-    public int insertPostIntoDatabase(String username, String postContent) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'insertPostIntoDatabase'");
-    }
+    
 
 }

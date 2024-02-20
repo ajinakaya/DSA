@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+// JFrame class representing the homepage
 public class Homepage extends JFrame {
 
     private JLabel lblUserName;
@@ -12,13 +13,17 @@ public class Homepage extends JFrame {
     private String initialHomeContent;
     private String username;
     private SocialGraph socialGraph;
+    private static dbconnection database;
+    private User loggedInUser; 
 
-
-    public Homepage(String username, SocialGraph socialGraph) {
+    public Homepage(String username, SocialGraph socialGraph, dbconnection database) {
         this.username = username;
         this.socialGraph = socialGraph;
+        this.database = database;
+        this.loggedInUser = socialGraph.getUser(username); 
     }
 
+    // Method to initialize the homepage GUI
     public void initialize(String userName, SocialGraph socialGraph) {
         this.socialGraph = socialGraph;
 
@@ -32,33 +37,35 @@ public class Homepage extends JFrame {
 
         // Navigation Bar
         JPanel navBar = new JPanel(new GridLayout(1, 3, 10, 0));
-        JButton btnHome = new JButton("Home", new ImageIcon("home_icon.png"));
+        JButton btnAddFriend = new JButton("Add Friend", new ImageIcon("add_friend_icon.png"));
         JButton btnPost = new JButton("Post", new ImageIcon("post_icon.png"));
         JButton btnAccount = new JButton("Account", new ImageIcon("account_icon.png"));
 
-        btnHome.addActionListener(new ActionListener() {
+         // ActionListener for Add Friend button
+        btnAddFriend.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                textAreaRecommendations.setText(initialHomeContent);
-                textAreaRecommendations.append(socialGraph.toString());
+                openFriendpage(loggedInUser); // 
             }
         });
 
+         // ActionListener for Post button
         btnPost.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                textAreaRecommendations.setText("Post Page");
+                openPostPage(username);
             }
         });
 
+        // ActionListener for Account button
         btnAccount.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                textAreaRecommendations.setText("Account Page");
+                openAccountPage(username);
             }
         });
 
-        navBar.add(btnHome);
+        navBar.add(btnAddFriend);
         navBar.add(btnPost);
         navBar.add(btnAccount);
 
@@ -89,15 +96,57 @@ public class Homepage extends JFrame {
         setVisible(true);
     }
 
+    // Method to open the friend page
+    private void openFriendpage(User loggedInUser) {
+        Friendpage friendpage = new Friendpage(loggedInUser, socialGraph, database);
+        friendpage.initialize();
+        friendpage.setVisible(true);
+    }
+
+     // Method to open the post page
+    private void openPostPage(String username) {
+        PostPage postPage = new PostPage(username, database);
+        postPage.initialize();
+        postPage.setVisible(true);
+    }
+
+      // Method to open the account page
+    private void openAccountPage(String username) {
+        AccountPage accountPage = new AccountPage(username, database);
+        accountPage.initialize();
+        accountPage.setVisible(true);
+    }
+
+    // Setter method to set the logged-in user
+    public void setLoggedInUser(User loggedInUser) {
+        this.loggedInUser = loggedInUser;
+    }
+
+    // Method to display recommended images in the text area
+    public void displayRecommendedImage(byte[] photoBytes) {
+        ImageIcon imageIcon = new ImageIcon(photoBytes);
+        Image image = imageIcon.getImage();
+        Image scaledImage = image.getScaledInstance(150, 150, Image.SCALE_SMOOTH); 
+        imageIcon = new ImageIcon(scaledImage);
+        textAreaRecommendations.append("\n"); 
+        textAreaRecommendations.setCaretPosition(textAreaRecommendations.getDocument().getLength()); 
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                SocialGraph socialGraph = new SocialGraph();
-                Homepage homepage = new Homepage("User123", socialGraph);
+                dbconnection database = new dbconnection();
+    
+                SocialGraph socialGraph = new SocialGraph(database);
+                socialGraph.printGraph();
+   
+                User loggedInUser = new User("User123", "user123@example.com", "password");
+                Homepage homepage = new Homepage("User123", socialGraph, database);
                 homepage.initialize("User123", socialGraph);
+                homepage.setLoggedInUser(loggedInUser);
             }
         });
     }
-    
+   
 }
